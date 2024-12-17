@@ -4,8 +4,16 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 
-# Updated CORS configuration to handle both localhost and 127.0.0.1
-CORS(app, origins="*")
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173"
+        ],
+        "methods": ["GET", "POST", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 @app.route('/add/<task>')
 def add(task):
@@ -23,6 +31,14 @@ def show():
         "todoList": todoList
     })
 
+@app.route('/remove/<task>', methods=['DELETE'])
+def remove(task):
+    todoList = remove_task(task)
+    return jsonify({
+        "message": "Task removed successfully",
+        "task": task,
+        "todoList": todoList
+    })
+
 if __name__ == '__main__':
-    # Be explicit about the host and port
     app.run(host='127.0.0.1', port=5000, debug=True)

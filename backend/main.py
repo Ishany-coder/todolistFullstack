@@ -20,8 +20,6 @@ def remove_task(task):
         print(f"Task '{task}' removed from the todo list. ")
     else:
         print(f"Task '{task}' not found in the todo list. ")
-        new_task = input("please enter a different task to remove: ")
-        remove_task(new_task)
 
 def show_list():
     for task in todoList:
