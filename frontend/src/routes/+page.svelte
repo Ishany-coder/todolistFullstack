@@ -1,31 +1,29 @@
 <script>
     import { onMount } from 'svelte';
+    import Cookies from 'js-cookie';
     
     let todo = '';
     let todoList = [];
     let loading = false;
     
-    const API_URL = 'http://127.0.0.1:5000';  // Define base URL once
+    // Function to save todos to cookies
+    function saveTodosToCookies() {
+        Cookies.set('todoList', JSON.stringify(todoList), { expires: 100 }); // Expires in 7 days
+    }
+    
+    // Function to load todos from cookies
+    function loadTodosFromCookies() {
+        const savedTodos = Cookies.get('todoList');
+        return savedTodos ? JSON.parse(savedTodos) : [];
+    }
     
     async function AddTask() {
         if (!todo.trim()) return;
         
         loading = true;
         try {
-            const response = await fetch(`${API_URL}/add/${encodeURIComponent(todo)}`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            todoList = data.todoList;
+            todoList = [...todoList, todo];
+            saveTodosToCookies();
             todo = '';
         } catch (error) {
             console.error('Error:', error);
@@ -34,23 +32,22 @@
         }
     }
 
-    onMount(async () => {
+    async function RemoveTask(item) {
         loading = true;
         try {
-            const response = await fetch(`${API_URL}/show`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            todoList = data.todoList;
+            todoList = todoList.filter(todo => todo !== item);
+            saveTodosToCookies();
+        } catch (error) {
+            console.error("error removing task " + error)
+        } finally {
+            loading = false;
+        }
+    }
+
+    onMount(() => {
+        loading = true;
+        try {
+            todoList = loadTodosFromCookies();
         } catch (error) {
             console.error('Error loading initial data:', error);
         } finally {
@@ -76,7 +73,12 @@
 {:else if todoList && todoList.length > 0}
     <ul>
         {#each todoList as item}
-            <li>{item}</li>
+            <li>
+                {item}
+                <button on:click={() => RemoveTask(item)} disabled={loading}>
+                    {loading ? 'Removing...' : 'Remove'}
+                </button>
+            </li>
         {/each}
     </ul>
 {:else}
